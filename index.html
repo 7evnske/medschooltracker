@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedSchool Anatomy Tracker</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase App (core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -574,6 +580,62 @@
         .dark-mode-toggle:hover {
             background: rgba(255, 255, 255, 0.3);
         }
+        
+        /* Auth styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .auth-btn:hover {
+            background: #357ae8;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .save-indicator.show {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
@@ -584,7 +646,19 @@
             <button class="dark-mode-toggle" id="darkModeToggle">
                 <i class="fas fa-moon"></i>
             </button>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <span id="userName"></span>
+                <button id="signOutBtn" class="btn btn-danger btn-small">Sign Out</button>
+            </div>
         </header>
+        
+        <div id="authContainer" class="auth-container">
+            <button id="signInBtn" class="auth-btn">
+                <i class="fab fa-google"></i>
+                Sign in with Google to save progress
+            </button>
+        </div>
         
         <div class="theme-selector">
             <div class="theme-container">
@@ -909,308 +983,345 @@
                 </ul>
                 
                 <div class="add-form">
-                    <input type="text" class="form-control" placeholder="Add new chapter..." id="new-chapter">
-                    <button class="btn btn-primary" onclick="addNewChapter()">Add</button>
+                    <input type="text" class="form-control" id="newSubjectInput" placeholder="Add new subject...">
+                    <button class="btn btn-primary" onclick="addSubject()">Add</button>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h2 class="card-title">Sub-Subjects Overview</h2>
-                    <span class="percentage" id="subtopic-overall-progress">0% complete</span>
+                    <h2 class="card-title">Study Resources</h2>
                 </div>
                 
-                <div class="progress-container">
-                    <div class="progress-info">
-                        <span>All Sub-Subjects Progress</span>
-                        <span id="all-subtopic-progress-text">0/0 topics</span>
+                <div class="subtopic-grid">
+                    <div class="subtopic-card">
+                        <h3>Anatomy Textbooks</h3>
+                        <ul>
+                            <li>Gray's Anatomy</li>
+                            <li>Netter's Atlas of Human Anatomy</li>
+                            <li>Clinically Oriented Anatomy</li>
+                            <li>Essential Clinical Anatomy</li>
+                        </ul>
                     </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="all-subtopic-progress-bar" style="width: 0%;"></div>
+                    
+                    <div class="subtopic-card">
+                        <h3>Online Resources</h3>
+                        <ul>
+                            <li>Kenhub Anatomy</li>
+                            <li>AnatomyZone</li>
+                            <li>TeachMeAnatomy</li>
+                            <li>Osmosis Anatomy</li>
+                        </ul>
                     </div>
-                </div>
-                
-                <div class="subtopic-grid" id="subtopic-overview">
-                    <!-- Will be populated by JavaScript -->
+                    
+                    <div class="subtopic-card">
+                        <h3>Study Tips</h3>
+                        <ul>
+                            <li>Use spaced repetition</li>
+                            <li>Practice with anatomy models</li>
+                            <li>Create concept maps</li>
+                            <li>Join study groups</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="subtopic-card">
+                        <h3>Flashcards</h3>
+                        <ul>
+                            <li>Anki Anatomy Decks</li>
+                            <li>Netter's Flashcards</li>
+                            <li>Create your own cards</li>
+                            <li>Focus on clinical correlations</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
         
         <div class="footer">
-            <p>MedSchool Anatomy Tracker © 2023 | Keep track of your anatomy studies progress</p>
+            <p>MedSchool Anatomy Tracker &copy; 2023 | Track your progress and ace your exams!</p>
         </div>
+    </div>
+    
+    <div id="saveIndicator" class="save-indicator">
+        <i class="fas fa-save"></i> Progress saved
     </div>
 
     <script>
-        // Initialize variables
-        let currentTheme = 'blue';
-        let darkMode = false;
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKM_BiYx4vWt9Tb4danjYaqUkFQapWhWw",
+            authDomain: "medschooltracker-4ea70.firebaseapp.com",
+            projectId: "medschooltracker-4ea70",
+            storageBucket: "medschooltracker-4ea70.firebasestorage.app",
+            messagingSenderId: "127233014342",
+            appId: "1:127233014342:web:cfd49b303d70abe821a847",
+            measurementId: "G-R1K9RHZ28X"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         
         // DOM elements
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        const chapterList = document.getElementById('chapter-list');
-        const subtopicOverview = document.getElementById('subtopic-overview');
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const authContainer = document.getElementById('authContainer');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const saveIndicator = document.getElementById('saveIndicator');
         
-        // Initialize the application
-        function initApp() {
-            // Set up event listeners
-            darkModeToggle.addEventListener('click', toggleDarkMode);
-            
-            // Set up drag and drop for subjects
-            setupDragAndDrop();
-            
-            // Initialize progress tracking
-            updateAllProgress();
-            
-            // Initialize subtopic overview
-            updateSubtopicOverview();
-        }
-        
-        // Set the theme
-        function setTheme(theme) {
-            document.body.classList.remove(
-                'blue-theme', 'red-theme', 'pink-theme', 
-                'purple-theme', 'orange-theme', 'yellow-theme', 'black-theme'
-            );
-            
-            document.body.classList.add(theme + '-theme');
-            currentTheme = theme;
-            
-            // Update dark mode if active
-            if (darkMode) {
-                document.body.classList.add('dark-theme');
-            } else {
-                document.body.classList.remove('dark-theme');
-            }
-        }
-        
-        // Toggle dark mode
-        function toggleDarkMode() {
-            darkMode = !darkMode;
-            
-            if (darkMode) {
-                document.body.classList.add('dark-theme');
-                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            } else {
-                document.body.classList.remove('dark-theme');
-                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-            }
-        }
-        
-        // Set up drag and drop for subjects
-        function setupDragAndDrop() {
-            const subjects = document.querySelectorAll('.subject-item');
-            
-            subjects.forEach(subject => {
-                subject.addEventListener('dragstart', handleDragStart);
-                subject.addEventListener('dragover', handleDragOver);
-                subject.addEventListener('dragenter', handleDragEnter);
-                subject.addEventListener('dragleave', handleDragLeave);
-                subject.addEventListener('drop', handleDrop);
-                subject.addEventListener('dragend', handleDragEnd);
-            });
-        }
-        
-        // Drag and drop handlers
-        function handleDragStart(e) {
-            this.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', this.dataset.subject);
-        }
-        
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-        
-        function handleDragEnter(e) {
-            e.preventDefault();
-            this.classList.add('drag-over');
-        }
-        
-        function handleDragLeave() {
-            this.classList.remove('drag-over');
-        }
-        
-        function handleDrop(e) {
-            e.preventDefault();
-            this.classList.remove('drag-over');
-            
-            const draggedSubject = e.dataTransfer.getData('text/plain');
-            const targetSubject = this.dataset.subject;
-            
-            if (draggedSubject !== targetSubject) {
-                // Reorder the subjects
-                const subjects = Array.from(document.querySelectorAll('.subject-item'));
-                const draggedElement = subjects.find(sub => sub.dataset.subject === draggedSubject);
-                const targetElement = subjects.find(sub => sub.dataset.subject === targetSubject);
+        // Authentication state observer
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                authContainer.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userAvatar.src = user.photoURL;
+                userName.textContent = user.displayName;
                 
-                if (draggedElement && targetElement) {
-                    const parent = draggedElement.parentNode;
-                    const targetIndex = subjects.indexOf(targetElement);
-                    const draggedIndex = subjects.indexOf(draggedElement);
-                    
-                    if (draggedIndex < targetIndex) {
-                        parent.insertBefore(draggedElement, targetElement.nextSibling);
+                // Load user's progress
+                loadUserProgress(user.uid);
+            } else {
+                // User is signed out
+                authContainer.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        });
+        
+        // Sign in with Google
+        signInBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    console.log('User signed in:', result.user);
+                    showSaveIndicator();
+                })
+                .catch(error => {
+                    console.error('Error signing in:', error);
+                });
+        });
+        
+        // Sign out
+        signOutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    console.log('User signed out');
+                })
+                .catch(error => {
+                    console.error('Error signing out:', error);
+                });
+        });
+        
+        // Save user progress to Firestore
+        function saveProgress() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const progressData = collectProgressData();
+            
+            db.collection('userProgress').doc(user.uid).set(progressData)
+                .then(() => {
+                    console.log('Progress saved successfully');
+                    showSaveIndicator();
+                })
+                .catch(error => {
+                    console.error('Error saving progress:', error);
+                });
+        }
+        
+        // Load user progress from Firestore
+        function loadUserProgress(userId) {
+            db.collection('userProgress').doc(userId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const progressData = doc.data();
+                        applyProgressData(progressData);
+                        console.log('Progress loaded successfully');
                     } else {
-                        parent.insertBefore(draggedElement, targetElement);
+                        console.log('No progress data found for user');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading progress:', error);
+                });
+        }
+        
+        // Collect all progress data from the page
+        function collectProgressData() {
+            const subjects = [];
+            document.querySelectorAll('.subject-item').forEach(subjectEl => {
+                const subjectName = subjectEl.getAttribute('data-subject');
+                const isCompleted = subjectEl.classList.contains('completed');
+                
+                const subTopics = [];
+                const subSubjectEl = subjectEl.querySelector('.sub-subjects');
+                if (subSubjectEl) {
+                    subSubjectEl.querySelectorAll('.sub-item').forEach(subTopicEl => {
+                        subTopics.push({
+                            name: subTopicEl.querySelector('span').textContent,
+                            completed: subTopicEl.classList.contains('completed')
+                        });
+                    });
+                }
+                
+                subjects.push({
+                    name: subjectName,
+                    completed: isCompleted,
+                    subTopics: subTopics
+                });
+            });
+            
+            return {
+                subjects: subjects,
+                lastUpdated: new Date()
+            };
+        }
+        
+        // Apply progress data to the page
+        function applyProgressData(progressData) {
+            progressData.subjects.forEach(subjectData => {
+                const subjectEl = document.querySelector(`.subject-item[data-subject="${subjectData.name}"]`);
+                if (subjectEl) {
+                    if (subjectData.completed) {
+                        subjectEl.classList.add('completed');
+                        subjectEl.querySelector('.btn-primary').textContent = 'Mark Incomplete';
+                    }
+                    
+                    const subSubjectEl = subjectEl.querySelector('.sub-subjects');
+                    if (subSubjectEl && subjectData.subTopics.length > 0) {
+                        // Clear existing sub-topics (except the add form)
+                        const addForm = subSubjectEl.querySelector('.add-form');
+                        subSubjectEl.innerHTML = '';
+                        if (addForm) subSubjectEl.appendChild(addForm);
+                        
+                        // Add saved sub-topics
+                        subjectData.subTopics.forEach(subTopicData => {
+                            const subTopicEl = document.createElement('div');
+                            subTopicEl.className = 'sub-item';
+                            if (subTopicData.completed) {
+                                subTopicEl.classList.add('completed');
+                            }
+                            
+                            subTopicEl.innerHTML = `
+                                <span>${subTopicData.name}</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                            
+                            subSubjectEl.insertBefore(subTopicEl, addForm);
+                        });
+                        
+                        // Update progress for this subject
+                        updateSubjectProgress(subjectEl);
                     }
                 }
-            }
-        }
-        
-        function handleDragEnd() {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.subject-item').forEach(item => {
-                item.classList.remove('drag-over');
             });
+            
+            // Update overall progress
+            updateOverallProgress();
         }
         
-        // Toggle sub-subjects visibility
-        function toggleSubSubjects(btn) {
-            const subjectItem = btn.closest('.subject-item');
-            const subSubjects = subjectItem.querySelector('.sub-subjects');
+        // Show save indicator
+        function showSaveIndicator() {
+            saveIndicator.classList.add('show');
+            setTimeout(() => {
+                saveIndicator.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Theme functionality
+        function setTheme(theme) {
+            document.body.className = '';
+            if (theme !== 'blue') {
+                document.body.classList.add(`${theme}-theme`);
+            }
             
-            if (subSubjects.classList.contains('show')) {
-                subSubjects.classList.remove('show');
-                btn.innerHTML = '<i class="fas fa-chevron-down"></i>';
-            } else {
-                // Close any other open sub-subjects
-                document.querySelectorAll('.sub-subjects.show').forEach(item => {
-                    item.classList.remove('show');
-                    item.previousElementSibling.querySelector('.btn-expand').innerHTML = '<i class="fas fa-chevron-down"></i>';
-                });
-                
-                subSubjects.classList.add('show');
-                btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            // Save theme preference
+            localStorage.setItem('theme', theme);
+            
+            // Check if dark mode is enabled and apply
+            const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+            if (darkModeEnabled) {
+                document.body.classList.add('dark-theme');
             }
         }
+        
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-theme');
+            
+            // Save dark mode preference
+            const isDarkMode = document.body.classList.contains('dark-theme');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update icon
+            this.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+        
+        // Load saved theme and dark mode preference
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'blue';
+            setTheme(savedTheme);
+            
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-theme');
+                document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        });
         
         // Toggle subject completion
-        function toggleSubjectCompletion(btn) {
-            const subjectItem = btn.closest('.subject-item');
-            const isCompleted = subjectItem.classList.contains('completed');
+        function toggleSubjectCompletion(button) {
+            const subjectItem = button.closest('.subject-item');
+            subjectItem.classList.toggle('completed');
             
-            if (isCompleted) {
-                subjectItem.classList.remove('completed');
-                btn.textContent = 'Mark Complete';
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
-                
-                // Mark all sub-topics as incomplete
-                const subItems = subjectItem.querySelectorAll('.sub-item');
-                subItems.forEach(subItem => {
-                    subItem.classList.remove('completed');
-                    const subBtn = subItem.querySelector('.btn');
-                    if (subBtn) {
-                        subBtn.textContent = 'Mark Complete';
-                        subBtn.classList.remove('btn-success');
-                        subBtn.classList.add('btn-primary');
-                    }
-                });
+            if (subjectItem.classList.contains('completed')) {
+                button.textContent = 'Mark Incomplete';
             } else {
-                subjectItem.classList.add('completed');
-                btn.textContent = 'Completed';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-success');
-                
-                // Mark all sub-topics as complete
-                const subItems = subjectItem.querySelectorAll('.sub-item');
-                subItems.forEach(subItem => {
-                    subItem.classList.add('completed');
-                    const subBtn = subItem.querySelector('.btn');
-                    if (subBtn) {
-                        subBtn.textContent = 'Completed';
-                        subBtn.classList.remove('btn-primary');
-                        subBtn.classList.add('btn-success');
-                    }
-                });
+                button.textContent = 'Mark Complete';
             }
             
-            // Update progress
-            updateSubjectProgress(subjectItem);
-            updateAllProgress();
-            updateSubtopicOverview();
+            updateOverallProgress();
+            saveProgress();
         }
         
         // Toggle sub-topic completion
-        function toggleSubTopicCompletion(btn) {
-            const subItem = btn.closest('.sub-item');
-            const isCompleted = subItem.classList.contains('completed');
+        function toggleSubTopicCompletion(button) {
+            const subItem = button.closest('.sub-item');
+            subItem.classList.toggle('completed');
             
-            if (isCompleted) {
-                subItem.classList.remove('completed');
-                btn.textContent = 'Mark Complete';
-                btn.classList.remove('btn-success');
-                btn.classList.add('btn-primary');
+            if (subItem.classList.contains('completed')) {
+                button.textContent = 'Mark Incomplete';
             } else {
-                subItem.classList.add('completed');
-                btn.textContent = 'Completed';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-success');
+                button.textContent = 'Mark Complete';
             }
             
-            // Update progress
-            const subjectItem = subItem.closest('.subject-item');
+            const subjectItem = button.closest('.subject-item');
             updateSubjectProgress(subjectItem);
-            updateAllProgress();
-            updateSubtopicOverview();
+            updateOverallProgress();
+            saveProgress();
         }
         
-        // Delete a sub-topic
-        function deleteSubTopic(btn) {
-            const subItem = btn.closest('.sub-item');
-            subItem.remove();
+        // Add new subject
+        function addSubject() {
+            const input = document.getElementById('newSubjectInput');
+            const subjectName = input.value.trim();
             
-            // Update progress
-            const subjectItem = subItem.closest('.subject-item');
-            updateSubjectProgress(subjectItem);
-            updateAllProgress();
-            updateSubtopicOverview();
-        }
-        
-        // Add a new sub-topic
-        function addSubTopic(btn) {
-            const addForm = btn.closest('.add-form');
-            const input = addForm.querySelector('.form-control');
-            const topicName = input.value.trim();
-            
-            if (topicName) {
-                const subSubjects = addForm.closest('.sub-subjects');
-                const subItem = document.createElement('div');
-                subItem.className = 'sub-item';
-                subItem.innerHTML = `
-                    <span>${topicName}</span>
-                    <div class="sub-item-actions">
-                        <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
-                        <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
+            if (subjectName) {
+                const subjectList = document.getElementById('chapter-list');
+                const newSubject = document.createElement('li');
+                newSubject.className = 'subject-item';
+                newSubject.setAttribute('data-subject', subjectName);
+                newSubject.setAttribute('draggable', 'true');
                 
-                subSubjects.insertBefore(subItem, addForm);
-                input.value = '';
-                
-                // Update progress
-                const subjectItem = subItem.closest('.subject-item');
-                updateSubjectProgress(subjectItem);
-                updateAllProgress();
-                updateSubtopicOverview();
-            }
-        }
-        
-        // Add a new chapter
-        function addNewChapter() {
-            const input = document.getElementById('new-chapter');
-            const chapterName = input.value.trim();
-            
-            if (chapterName) {
-                const subjectItem = document.createElement('li');
-                subjectItem.className = 'subject-item';
-                subjectItem.draggable = true;
-                subjectItem.dataset.subject = chapterName;
-                
-                subjectItem.innerHTML = `
+                newSubject.innerHTML = `
                     <div class="subject-name">
                         <i class="fas fa-brain"></i>
-                        <span>${chapterName}</span>
+                        <span>${subjectName}</span>
                     </div>
                     <div class="subject-actions">
                         <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
@@ -1219,11 +1330,11 @@
                     <div class="sub-subjects">
                         <div class="sub-progress">
                             <div class="progress-info">
-                                <span>${chapterName} Progress</span>
-                                <span id="${chapterName.toLowerCase().replace(/\s+/g, '-')}-progress-text">0/0 topics</span>
+                                <span>${subjectName} Progress</span>
+                                <span id="${subjectName.toLowerCase().replace(/\s+/g, '-')}-progress-text">0/0 topics</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill" id="${chapterName.toLowerCase().replace(/\s+/g, '-')}-progress-bar" style="width: 0%;"></div>
+                                <div class="progress-fill" id="${subjectName.toLowerCase().replace(/\s+/g, '-')}-progress-bar" style="width: 0%;"></div>
                             </div>
                         </div>
                         <div class="add-form">
@@ -1233,123 +1344,187 @@
                     </div>
                 `;
                 
-                chapterList.appendChild(subjectItem);
+                subjectList.appendChild(newSubject);
                 input.value = '';
                 
-                // Set up drag and drop for the new subject
-                setupDragAndDrop();
+                // Make the new subject draggable
+                setupDragAndDrop(newSubject);
+                
+                saveProgress();
+            }
+        }
+        
+        // Add new sub-topic
+        function addSubTopic(button) {
+            const addForm = button.closest('.add-form');
+            const input = addForm.querySelector('input');
+            const subTopicName = input.value.trim();
+            
+            if (subTopicName) {
+                const subSubjects = addForm.closest('.sub-subjects');
+                const newSubTopic = document.createElement('div');
+                newSubTopic.className = 'sub-item';
+                
+                newSubTopic.innerHTML = `
+                    <span>${subTopicName}</span>
+                    <div class="sub-item-actions">
+                        <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                        <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                
+                subSubjects.insertBefore(newSubTopic, addForm);
+                input.value = '';
+                
+                const subjectItem = subSubjects.closest('.subject-item');
+                updateSubjectProgress(subjectItem);
+                updateOverallProgress();
+                saveProgress();
+            }
+        }
+        
+        // Delete sub-topic
+        function deleteSubTopic(button) {
+            const subItem = button.closest('.sub-item');
+            subItem.remove();
+            
+            const subjectItem = subItem.closest('.subject-item');
+            updateSubjectProgress(subjectItem);
+            updateOverallProgress();
+            saveProgress();
+        }
+        
+        // Toggle sub-subjects visibility
+        function toggleSubSubjects(button) {
+            const subjectItem = button.closest('.subject-item');
+            const subSubjects = subjectItem.querySelector('.sub-subjects');
+            
+            subSubjects.classList.toggle('show');
+            
+            if (subSubjects.classList.contains('show')) {
+                button.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            } else {
+                button.innerHTML = '<i class="fas fa-chevron-down"></i>';
             }
         }
         
         // Update subject progress
         function updateSubjectProgress(subjectItem) {
-            const subjectName = subjectItem.dataset.subject;
-            const subItems = subjectItem.querySelectorAll('.sub-item');
-            const completedSubItems = subjectItem.querySelectorAll('.sub-item.completed');
+            const subSubjects = subjectItem.querySelector('.sub-subjects');
+            if (!subSubjects) return;
             
-            // Calculate progress percentage
-            const progressPercentage = subItems.length > 0 ? (completedSubItems.length / subItems.length) * 100 : 0;
+            const subItems = subSubjects.querySelectorAll('.sub-item');
+            const completedSubItems = subSubjects.querySelectorAll('.sub-item.completed');
             
-            // Update progress bar
-            const progressBar = subjectItem.querySelector('.progress-fill');
+            const progressPercent = subItems.length > 0 ? (completedSubItems.length / subItems.length) * 100 : 0;
+            
+            const subjectName = subjectItem.getAttribute('data-subject');
+            const progressBar = subSubjects.querySelector('.progress-fill');
+            const progressText = subSubjects.querySelector('.progress-info span:last-child');
+            
             if (progressBar) {
-                progressBar.style.width = `${progressPercentage}%`;
+                progressBar.style.width = `${progressPercent}%`;
             }
             
-            // Update progress text
-            const progressText = subjectItem.querySelector('.progress-info span:last-child');
             if (progressText) {
                 progressText.textContent = `${completedSubItems.length}/${subItems.length} topics`;
             }
             
-            // Update subject completion status
-            if (completedSubItems.length === subItems.length && subItems.length > 0) {
+            // If all sub-topics are completed, mark the subject as completed
+            if (subItems.length > 0 && completedSubItems.length === subItems.length) {
                 subjectItem.classList.add('completed');
-                const subjectBtn = subjectItem.querySelector('.subject-actions .btn-primary');
-                if (subjectBtn) {
-                    subjectBtn.textContent = 'Completed';
-                    subjectBtn.classList.remove('btn-primary');
-                    subjectBtn.classList.add('btn-success');
-                }
-            } else {
+                subjectItem.querySelector('.btn-primary').textContent = 'Mark Incomplete';
+            } else if (subjectItem.classList.contains('completed')) {
                 subjectItem.classList.remove('completed');
-                const subjectBtn = subjectItem.querySelector('.subject-actions .btn-primary');
-                if (subjectBtn) {
-                    subjectBtn.textContent = 'Mark Complete';
-                    subjectBtn.classList.remove('btn-success');
-                    subjectBtn.classList.add('btn-primary');
-                }
+                subjectItem.querySelector('.btn-primary').textContent = 'Mark Complete';
             }
         }
         
-        // Update all progress
-        function updateAllProgress() {
-            // Update chapter progress
-            const subjects = document.querySelectorAll('.subject-item');
+        // Update overall progress
+        function updateOverallProgress() {
+            const subjectItems = document.querySelectorAll('.subject-item');
             const completedSubjects = document.querySelectorAll('.subject-item.completed');
             
-            const chapterProgressPercentage = (completedSubjects.length / subjects.length) * 100;
-            document.getElementById('chapter-progress-bar').style.width = `${chapterProgressPercentage}%`;
-            document.getElementById('chapter-progress-text').textContent = `${completedSubjects.length}/${subjects.length} chapters`;
-            document.getElementById('overall-chapter-progress').textContent = `${Math.round(chapterProgressPercentage)}% complete`;
+            const progressPercent = subjectItems.length > 0 ? (completedSubjects.length / subjectItems.length) * 100 : 0;
             
-            // Update subtopic progress
-            let totalSubtopics = 0;
-            let completedSubtopics = 0;
+            const progressBar = document.getElementById('chapter-progress-bar');
+            const progressText = document.getElementById('chapter-progress-text');
+            const overallProgress = document.getElementById('overall-progress');
+            const chapterProgress = document.getElementById('overall-chapter-progress');
             
-            subjects.forEach(subject => {
-                const subItems = subject.querySelectorAll('.sub-item');
-                const completedSubItems = subject.querySelectorAll('.sub-item.completed');
-                
-                totalSubtopics += subItems.length;
-                completedSubtopics += completedSubItems.length;
-            });
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
             
-            const subtopicProgressPercentage = totalSubtopics > 0 ? (completedSubtopics / totalSubtopics) * 100 : 0;
-            document.getElementById('all-subtopic-progress-bar').style.width = `${subtopicProgressPercentage}%`;
-            document.getElementById('all-subtopic-progress-text').textContent = `${completedSubtopics}/${totalSubtopics} topics`;
-            document.getElementById('subtopic-overall-progress').textContent = `${Math.round(subtopicProgressPercentage)}% complete`;
+            if (progressText) {
+                progressText.textContent = `${completedSubjects.length}/${subjectItems.length} chapters`;
+            }
             
-            // Update overall progress
-            const overallProgress = Math.round((chapterProgressPercentage + subtopicProgressPercentage) / 2);
-            document.getElementById('overall-progress').textContent = `${overallProgress}%`;
+            if (overallProgress) {
+                overallProgress.textContent = `${Math.round(progressPercent)}%`;
+            }
+            
+            if (chapterProgress) {
+                chapterProgress.textContent = `${Math.round(progressPercent)}% complete`;
+            }
         }
         
-        // Update subtopic overview
-        function updateSubtopicOverview() {
-            subtopicOverview.innerHTML = '';
+        // Setup drag and drop for subjects
+        function setupDragAndDrop(item) {
+            item.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.id);
+                this.classList.add('dragging');
+            });
             
-            const subjects = document.querySelectorAll('.subject-item');
-            
-            subjects.forEach(subject => {
-                const subjectName = subject.dataset.subject;
-                const subItems = subject.querySelectorAll('.sub-item');
-                const completedSubItems = subject.querySelectorAll('.sub-item.completed');
-                
-                const progressPercentage = subItems.length > 0 ? (completedSubItems.length / subItems.length) * 100 : 0;
-                
-                const subtopicCard = document.createElement('div');
-                subtopicCard.className = 'subtopic-card';
-                subtopicCard.innerHTML = `
-                    <h3>${subjectName}</h3>
-                    <div class="progress-info">
-                        <span>Progress</span>
-                        <span>${Math.round(progressPercentage)}%</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${progressPercentage}%;"></div>
-                    </div>
-                    <div class="progress-details">
-                        <p>${completedSubItems.length} of ${subItems.length} topics completed</p>
-                    </div>
-                `;
-                
-                subtopicOverview.appendChild(subtopicCard);
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
             });
         }
         
-        // Initialize the app when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', initApp);
+        // Initialize drag and drop for existing subjects
+        document.querySelectorAll('.subject-item').forEach(item => {
+            setupDragAndDrop(item);
+        });
+        
+        // Make the subject list a drop zone
+        const subjectList = document.getElementById('chapter-list');
+        
+        subjectList.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            const draggingItem = document.querySelector('.dragging');
+            const afterElement = getDragAfterElement(this, e.clientY);
+            
+            if (afterElement) {
+                this.insertBefore(draggingItem, afterElement);
+            } else {
+                this.appendChild(draggingItem);
+            }
+        });
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.subject-item:not(.dragging)')];
+            
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        // Initialize progress on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOverallProgress();
+            
+            // Update individual subject progress
+            document.querySelectorAll('.subject-item').forEach(subjectItem => {
+                updateSubjectProgress(subjectItem);
+            });
+        });
     </script>
 </body>
 </html>
