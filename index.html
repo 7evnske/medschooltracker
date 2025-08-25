@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSchool Anatomy Tracker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase App (core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Firebase Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #27ae60;
+            --hover-color: #f8f9fa;
+            --header-gradient: linear-gradient(120deg, #3498db, #2c3e50);
+        }
+        
+        body.dark-theme {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #27ae60;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #3498db, #2c3e50);
+        }
+        
+        body.red-theme {
+            --primary-color: #e74c3c;
+            --secondary-color: #c0392b;
+            --background-color: #fdf2f2;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #c0392b;
+            --hover-color: #fce7e7;
+            --header-gradient: linear-gradient(120deg, #e74c3c, #c0392b);
+        }
+        
+        body.red-theme.dark-theme {
+            --primary-color: #e74c3c;
+            --secondary-color: #c0392b;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #c0392b;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #e74c3c, #c0392b);
+        }
+        
+        body.pink-theme {
+            --primary-color: #e84393;
+            --secondary-color: #fd79a8;
+            --background-color: #fdf2f8;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #fd79a8;
+            --hover-color: #fce7f3;
+            --header-gradient: linear-gradient(120deg, #e84393, #fd79a8);
+        }
+        
+        body.pink-theme.dark-theme {
+            --primary-color: #e84393;
+            --secondary-color: #fd79a8;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #fd79a8;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #e84393, #fd79a8);
+        }
+        
+        body.purple-theme {
+            --primary-color: #9b59b6;
+            --secondary-color: #8e44ad;
+            --background-color: #f5f3ff;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #8e44ad;
+            --hover-color: #ede9fe;
+            --header-gradient: linear-gradient(120deg, #9b59b6, #8e44ad);
+        }
+        
+        body.purple-theme.dark-theme {
+            --primary-color: #9b59b6;
+            --secondary-color: #8e44ad;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #8e44ad;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #9b59b6, #8e44ad);
+        }
+        
+        body.orange-theme {
+            --primary-color: #e67e22;
+            --secondary-color: #d35400;
+            --background-color: #fff7ed;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #d35400;
+            --hover-color: #ffedd5;
+            --header-gradient: linear-gradient(120deg, #e67e22, #d35400);
+        }
+        
+        body.orange-theme.dark-theme {
+            --primary-color: #e67e22;
+            --secondary-color: #d35400;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #d35400;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #e67e22, #d35400);
+        }
+        
+        body.yellow-theme {
+            --primary-color: #f1c40f;
+            --secondary-color: #f39c12;
+            --background-color: #fefce8;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #f39c12;
+            --hover-color: #fef9c3;
+            --header-gradient: linear-gradient(120deg, #f1c40f, #f39c12);
+        }
+        
+        body.yellow-theme.dark-theme {
+            --primary-color: #f1c40f;
+            --secondary-color: #f39c12;
+            --background-color: 1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #f5f7fa;
+            --completed-color: #f39c12;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #f1c40f, #f39c12);
+        }
+        
+        body.black-theme {
+            --primary-color: #34495e;
+            --secondary-color: #2c3e50;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --completed-color: #27ae60;
+            --hover-color: #f8f9fa;
+            --header-gradient: linear-gradient(120deg, #34495e, #2c3e50);
+        }
+        
+        body.black-theme.dark-theme {
+            --primary-color: #34495e;
+            --secondary-color: #2c3e50;
+            --background-color: #1a1a1a;
+            --card-color: #2d2d2d;
+            --text-color: #ecf0f1;
+            --completed-color: #27ae60;
+            --hover-color: #3d3d3d;
+            --header-gradient: linear-gradient(120deg, #34495e, #2c3e50);
+        }
+        
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--header-gradient);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 992px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--card-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--text-color);
+        }
+        
+        .progress-container {
+            margin-bottom: 25px;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .subject-list {
+            list-style: none;
+        }
+        
+        .subject-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--hover-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+            cursor: move;
+        }
+        
+        .subject-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subject-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subject-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary-color);
+        }
+        
+        .btn-success {
+            background: var(--completed-color);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-expand {
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 5px 10px;
+        }
+        
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-control {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: var(--card-color);
+            color: var(--text-color);
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .stat {
+            background: var(--card-color);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            margin: 0 10px;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-title {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+        }
+        
+        .percentage {
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        
+        .completed {
+            color: var(--completed-color);
+        }
+        
+        .theme-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .theme-btn.blue {
+            background: linear-gradient(45deg, #3498db, #2c3e50);
+        }
+        
+        .theme-btn.red {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .theme-btn.pink {
+            background: linear-gradient(45deg, #e84393, #fd79a8);
+        }
+        
+        .theme-btn.purple {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        }
+        
+        .theme-btn.orange {
+            background: linear-gradient(45deg, #e67e22, #d35400);
+        }
+        
+        .theme-btn.yellow {
+            background: linear-gradient(45deg, #f1c40f, #f39c12);
+        }
+        
+        .theme-btn.black {
+            background: linear-gradient(45deg, #34495e, #2c3e50);
+        }
+        
+        .sub-subjects {
+            margin-top: 15px;
+            padding: 15px;
+            display: none;
+            background: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .sub-subjects.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .sub-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--hover-color);
+            border-radius: 5px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        
+        .sub-item:hover {
+            transform: translateX(5px);
+        }
+        
+        .sub-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+        
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+        
+        .sub-progress {
+            margin: 15px 0;
+            padding: 12px;
+            background: var(--hover-color);
+            border-radius: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+        }
+        
+        .dragging {
+            opacity: 0.7;
+            border: 2px dashed var(--primary-color);
+        }
+        
+        .expandable {
+            transition: all 0.3s ease;
+        }
+        
+        .theme-label {
+            font-size: 0.8rem;
+            text-align: center;
+            margin-top: 5px;
+            color: var(--text-color);
+        }
+        
+        .theme-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 5px;
+        }
+        
+        .subtopic-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .subtopic-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .subtopic-card {
+            background: var(--hover-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .subtopic-card h3 {
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Auth styles */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .auth-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .auth-btn:hover {
+            background: #357ae8;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .save-indicator.show {
+            opacity: 1;
+        }
+        
+        /* Notes section */
+        .notes-container {
+            margin-top: 20px;
+        }
+        
+        .note-card {
+            background: var(--card-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .note-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .note-content {
+            padding: 10px;
+            background: var(--hover-color);
+            border-radius: 5px;
+            min-height: 100px;
+        }
+        
+        .add-note-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .add-note-btn:hover {
+            background: var(--secondary-color);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>MedSchool Anatomy Tracker</h1>
+            <p class="subtitle">Track your progress through anatomy subjects and sub-topics</p>
+            <button class="dark-mode-toggle" id="darkModeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <span id="userName"></span>
+                <button id="signOutBtn" class="btn btn-danger btn-small">Sign Out</button>
+            </div>
+        </header>
+        
+        <div id="authContainer" class="auth-container">
+            <button id="signInBtn" class="auth-btn">
+                <i class="fab fa-google"></i>
+                Sign in with Google to save progress
+            </button>
+        </div>
+        
+        <div class="theme-selector">
+            <div class="theme-container">
+                <button class="theme-btn blue" onclick="setTheme('blue')"></button>
+                <span class="theme-label">Blue</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn red" onclick="setTheme('red')"></button>
+                <span class="theme-label">Red</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn pink" onclick="setTheme('pink')"></button>
+                <span class="theme-label">Pink</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn purple" onclick="setTheme('purple')"></button>
+                <span class="theme-label">Purple</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn orange" onclick="setTheme('orange')"></button>
+                <span class="theme-label">Orange</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn yellow" onclick="setTheme('yellow')"></button>
+                <span class="theme-label">Yellow</span>
+            </div>
+            <div class="theme-container">
+                <button class="theme-btn black" onclick="setTheme('black')"></button>
+                <span class="theme-label">Black</span>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <i class="fas fa-book-medical fa-2x"></i>
+                <div class="stat-number">10</div>
+                <div class="stat-title">Main Subjects</div>
+            </div>
+            <div class="stat">
+                <i class="fas fa-brain fa-2x"></i>
+                <div class="stat-number">10</div>
+                <div class="stat-title">Chapters in Anatomy</div>
+            </div>
+            <div class="stat">
+                <i class="fas fa-tasks fa-2x"></i>
+                <div class="stat-number" id="overall-progress">0%</div>
+                <div class="stat-title">Overall Progress</div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Anatomy Chapters</h2>
+                    <span class="percentage" id="overall-chapter-progress">0% complete</span>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>Overall Progress</span>
+                        <span id="chapter-progress-text">0/10 chapters</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="chapter-progress-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <ul class="subject-list" id="chapter-list">
+                    <li class="subject-item" draggable="true" data-subject="General Anatomy">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>General Anatomy</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>General Anatomy Progress</span>
+                                    <span id="general-anatomy-progress-text">0/5 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="general-anatomy-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Basic anatomical terminology</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Body planes and sections</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Body cavities</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Basic tissue types</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Anatomical variations</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Embryology">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Embryology</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Embryology Progress</span>
+                                    <span id="embryology-progress-text">0/4 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="embryology-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Early embryonic development</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Formation of body systems</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Fetal development</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="sub-item">
+                                <span>Congenital abnormalities</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Neuroanatomy">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Neuroanatomy</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Neuroanatomy Progress</span>
+                                    <span id="neuroanatomy-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="neuroanatomy-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Osteology">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Osteology</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Osteology Progress</span>
+                                    <span id="osteology-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="osteology-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Abdomen Pelvis Perineum">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Abdomen Pelvis Perineum</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Abdomen Progress</span>
+                                    <span id="abdomen-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="abdomen-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Histology">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Histology</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Histology Progress</span>
+                                    <span id="histology-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="histology-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Upper Limb">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Upper Limb</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Upper Limb Progress</span>
+                                    <span id="upper-limb-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="upper-limb-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Lower Limb">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Lower Limb</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Lower Limb Progress</span>
+                                    <span id="lower-limb-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="lower-limb-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Head and Neck">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Head and Neck</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Head & Neck Progress</span>
+                                    <span id="head-neck-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="head-neck-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="subject-item" draggable="true" data-subject="Thorax">
+                        <div class="subject-name">
+                            <i class="fas fa-brain"></i>
+                            <span>Thorax</span>
+                        </div>
+                        <div class="subject-actions">
+                            <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                            <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                        </div>
+                        <div class="sub-subjects">
+                            <div class="sub-progress">
+                                <div class="progress-info">
+                                    <span>Thorax Progress</span>
+                                    <span id="thorax-progress-text">0/0 topics</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="thorax-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="add-form">
+                                <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                                <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+                
+                <div class="add-form">
+                    <input type="text" class="form-control" id="newSubjectInput" placeholder="Add new subject...">
+                    <button class="btn btn-primary" onclick="addSubject()">Add</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Sub-Subjects Overview</h2>
+                    <span class="percentage" id="subtopic-overall-progress">0% complete</span>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-info">
+                        <span>All Sub-Subjects Progress</span>
+                        <span id="all-subtopic-progress-text">0/0 topics</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="all-subtopic-progress-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                
+                <div class="subtopic-grid" id="subtopic-overview">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>MedSchool Anatomy Tracker © 2025 | Track your progress and ace your exams!</p>
+        </div>
+    </div>
+    
+    <div id="saveIndicator" class="save-indicator">
+        <i class="fas fa-save"></i> Progress saved
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAKM_BiYx4vWt9Tb4danjYaqUkFQapWhWw",
+            authDomain: "medschooltracker-4ea70.firebaseapp.com",
+            projectId: "medschooltracker-4ea70",
+            storageBucket: "medschooltracker-4ea70.firebasestorage.app",
+            messagingSenderId: "127233014342",
+            appId: "1:127233014342:web:cfd49b303d70abe821a847",
+            measurementId: "G-R1K9RHZ28X"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        // DOM elements
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const authContainer = document.getElementById('authContainer');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const saveIndicator = document.getElementById('saveIndicator');
+        const subtopicOverview = document.getElementById('subtopic-overview');
+        
+        // Authentication state observer
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                // User is signed in
+                authContainer.style.display = 'none';
+                userInfo.style.display = 'flex';
+                userAvatar.src = user.photoURL;
+                userName.textContent = user.displayName;
+                
+                // Load user's progress
+                loadUserProgress(user.uid);
+            } else {
+                // User is signed out
+                authContainer.style.display = 'flex';
+                userInfo.style.display = 'none';
+            }
+        });
+        
+        // Sign in with Google
+        signInBtn.addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    console.log('User signed in:', result.user);
+                    showSaveIndicator();
+                })
+                .catch(error => {
+                    console.error('Error signing in:', error);
+                });
+        });
+        
+        // Sign out
+        signOutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    console.log('User signed out');
+                })
+                .catch(error => {
+                    console.error('Error signing out:', error);
+                });
+        });
+        
+        // Save user progress to Firestore
+        function saveProgress() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const progressData = collectProgressData();
+            
+            db.collection('userProgress').doc(user.uid).set(progressData)
+                .then(() => {
+                    console.log('Progress saved successfully');
+                    showSaveIndicator();
+                })
+                .catch(error => {
+                    console.error('Error saving progress:', error);
+                });
+        }
+        
+        // Load user progress from Firestore
+        function loadUserProgress(userId) {
+            db.collection('userProgress').doc(userId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const progressData = doc.data();
+                        applyProgressData(progressData);
+                        console.log('Progress loaded successfully');
+                    } else {
+                        console.log('No progress data found for user');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading progress:', error);
+                });
+        }
+        
+        // Collect all progress data from the page
+        function collectProgressData() {
+            const subjects = [];
+            document.querySelectorAll('.subject-item').forEach(subjectEl => {
+                const subjectName = subjectEl.getAttribute('data-subject');
+                const isCompleted = subjectEl.classList.contains('completed');
+                
+                const subTopics = [];
+                const subSubjectEl = subjectEl.querySelector('.sub-subjects');
+                if (subSubjectEl) {
+                    subSubjectEl.querySelectorAll('.sub-item').forEach(subTopicEl => {
+                        subTopics.push({
+                            name: subTopicEl.querySelector('span').textContent,
+                            completed: subTopicEl.classList.contains('completed')
+                        });
+                    });
+                }
+                
+                subjects.push({
+                    name: subjectName,
+                    completed: isCompleted,
+                    subTopics: subTopics
+                });
+            });
+            
+            return {
+                subjects: subjects,
+                lastUpdated: new Date()
+            };
+        }
+        
+        // Apply progress data to the page
+        function applyProgressData(progressData) {
+            progressData.subjects.forEach(subjectData => {
+                const subjectEl = document.querySelector(`.subject-item[data-subject="${subjectData.name}"]`);
+                if (subjectEl) {
+                    if (subjectData.completed) {
+                        subjectEl.classList.add('completed');
+                        subjectEl.querySelector('.btn-primary').textContent = 'Mark Incomplete';
+                    }
+                    
+                    const subSubjectEl = subjectEl.querySelector('.sub-subjects');
+                    if (subSubjectEl && subjectData.subTopics.length > 0) {
+                        // Clear existing sub-topics (except the add form)
+                        const addForm = subSubjectEl.querySelector('.add-form');
+                        subSubjectEl.innerHTML = '';
+                        if (addForm) subSubjectEl.appendChild(addForm);
+                        
+                        // Add saved sub-topics
+                        subjectData.subTopics.forEach(subTopicData => {
+                            const subTopicEl = document.createElement('div');
+                            subTopicEl.className = 'sub-item';
+                            if (subTopicData.completed) {
+                                subTopicEl.classList.add('completed');
+                            }
+                            
+                            subTopicEl.innerHTML = `
+                                <span>${subTopicData.name}</span>
+                                <div class="sub-item-actions">
+                                    <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                                    <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                                </div>
+                            `;
+                            
+                            subSubjectEl.insertBefore(subTopicEl, addForm);
+                        });
+                        
+                        // Update progress for this subject
+                        updateSubjectProgress(subjectEl);
+                    }
+                }
+            });
+            
+            // Update overall progress
+            updateAllProgress();
+            updateSubtopicOverview();
+        }
+        
+        // Show save indicator
+        function showSaveIndicator() {
+            saveIndicator.classList.add('show');
+            setTimeout(() => {
+                saveIndicator.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Theme functionality
+        function setTheme(theme) {
+            document.body.className = '';
+            if (theme !== 'blue') {
+                document.body.classList.add(`${theme}-theme`);
+            }
+            
+            // Save theme preference
+            localStorage.setItem('theme', theme);
+            
+            // Check if dark mode is enabled and apply
+            const darkModeEnabled = localStorage.getItem('darkMode') === 'true';
+            if (darkModeEnabled) {
+                document.body.classList.add('dark-theme');
+            }
+        }
+        
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-theme');
+            
+            // Save dark mode preference
+            const isDarkMode = document.body.classList.contains('dark-theme');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            // Update icon
+            this.innerHTML = isDarkMode ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+        });
+        
+        // Load saved theme and dark mode preference
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'blue';
+            setTheme(savedTheme);
+            
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-theme');
+                document.getElementById('darkModeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            // Initialize progress
+            updateAllProgress();
+            document.querySelectorAll('.subject-item').forEach(subjectItem => {
+                updateSubjectProgress(subjectItem);
+            });
+            
+            // Initialize subtopic overview
+            updateSubtopicOverview();
+        });
+        
+        // Toggle subject completion
+        function toggleSubjectCompletion(btn) {
+            const subjectItem = btn.closest('.subject-item');
+            subjectItem.classList.toggle('completed');
+            
+            if (subjectItem.classList.contains('completed')) {
+                btn.textContent = 'Completed';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+                
+                // Mark all sub-topics as complete
+                const subItems = subjectItem.querySelectorAll('.sub-item');
+                subItems.forEach(subItem => {
+                    subItem.classList.add('completed');
+                    const subBtn = subItem.querySelector('.btn');
+                    if (subBtn) {
+                        subBtn.textContent = 'Completed';
+                        subBtn.classList.remove('btn-primary');
+                        subBtn.classList.add('btn-success');
+                    }
+                });
+            } else {
+                btn.textContent = 'Mark Complete';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+                
+                // Mark all sub-topics as incomplete
+                const subItems = subjectItem.querySelectorAll('.sub-item');
+                subItems.forEach(subItem => {
+                    subItem.classList.remove('completed');
+                    const subBtn = subItem.querySelector('.btn');
+                    if (subBtn) {
+                        subBtn.textContent = 'Mark Complete';
+                        subBtn.classList.remove('btn-success');
+                        subBtn.classList.add('btn-primary');
+                    }
+                });
+            }
+            
+            updateSubjectProgress(subjectItem);
+            updateAllProgress();
+            updateSubtopicOverview();
+            saveProgress();
+        }
+        
+        // Toggle sub-topic completion
+        function toggleSubTopicCompletion(btn) {
+            const subItem = btn.closest('.sub-item');
+            subItem.classList.toggle('completed');
+            
+            if (subItem.classList.contains('completed')) {
+                btn.textContent = 'Completed';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+            } else {
+                btn.textContent = 'Mark Complete';
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }
+            
+            const subjectItem = subItem.closest('.subject-item');
+            updateSubjectProgress(subjectItem);
+            updateAllProgress();
+            updateSubtopicOverview();
+            saveProgress();
+        }
+        
+        // Toggle sub-subjects visibility
+        function toggleSubSubjects(btn) {
+            const subjectItem = btn.closest('.subject-item');
+            const subSubjects = subjectItem.querySelector('.sub-subjects');
+            
+            if (subSubjects.classList.contains('show')) {
+                subSubjects.classList.remove('show');
+                btn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            } else {
+                // Close any other open sub-subjects
+                document.querySelectorAll('.sub-subjects.show').forEach(item => {
+                    item.classList.remove('show');
+                    const expandBtn = item.closest('.subject-item').querySelector('.btn-expand');
+                    if (expandBtn) {
+                        expandBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    }
+                });
+                
+                subSubjects.classList.add('show');
+                btn.innerHTML = '<i class="fas fa-chevron-up"></i>';
+            }
+        }
+        
+        // Add new subject
+        function addSubject() {
+            const input = document.getElementById('newSubjectInput');
+            const subjectName = input.value.trim();
+            
+            if (subjectName) {
+                const subjectList = document.getElementById('chapter-list');
+                const newSubject = document.createElement('li');
+                newSubject.className = 'subject-item';
+                newSubject.setAttribute('data-subject', subjectName);
+                newSubject.setAttribute('draggable', 'true');
+                
+                newSubject.innerHTML = `
+                    <div class="subject-name">
+                        <i class="fas fa-brain"></i>
+                        <span>${subjectName}</span>
+                    </div>
+                    <div class="subject-actions">
+                        <button class="btn btn-expand" onclick="toggleSubSubjects(this)"><i class="fas fa-chevron-down"></i></button>
+                        <button class="btn btn-primary" onclick="toggleSubjectCompletion(this)">Mark Complete</button>
+                    </div>
+                    <div class="sub-subjects">
+                        <div class="sub-progress">
+                            <div class="progress-info">
+                                <span>${subjectName} Progress</span>
+                                <span id="${subjectName.toLowerCase().replace(/\s+/g, '-')}-progress-text">0/0 topics</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="${subjectName.toLowerCase().replace(/\s+/g, '-')}-progress-bar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="add-form">
+                            <input type="text" class="form-control" placeholder="Add new sub-topic...">
+                            <button class="btn btn-primary" onclick="addSubTopic(this)">Add</button>
+                        </div>
+                    </div>
+                `;
+                
+                subjectList.appendChild(newSubject);
+                input.value = '';
+                
+                // Set up drag and drop for the new subject
+                setupDragAndDrop(newSubject);
+                
+                saveProgress();
+            }
+        }
+        
+        // Add new sub-topic
+        function addSubTopic(btn) {
+            const addForm = btn.closest('.add-form');
+            const input = addForm.querySelector('input');
+            const subTopicName = input.value.trim();
+            
+            if (subTopicName) {
+                const subSubjects = addForm.closest('.sub-subjects');
+                const newSubTopic = document.createElement('div');
+                newSubTopic.className = 'sub-item';
+                
+                newSubTopic.innerHTML = `
+                    <span>${subTopicName}</span>
+                    <div class="sub-item-actions">
+                        <button class="btn btn-primary btn-small" onclick="toggleSubTopicCompletion(this)">Mark Complete</button>
+                        <button class="btn-delete" onclick="deleteSubTopic(this)"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                
+                subSubjects.insertBefore(newSubTopic, addForm);
+                input.value = '';
+                
+                const subjectItem = subSubjects.closest('.subject-item');
+                updateSubjectProgress(subjectItem);
+                updateAllProgress();
+                updateSubtopicOverview();
+                saveProgress();
+            }
+        }
+        
+        // Delete sub-topic
+        function deleteSubTopic(btn) {
+            const subItem = btn.closest('.sub-item');
+            subItem.remove();
+            
+            const subjectItem = subItem.closest('.subject-item');
+            updateSubjectProgress(subjectItem);
+            updateAllProgress();
+            updateSubtopicOverview();
+            saveProgress();
+        }
+        
+        // Update subject progress
+        function updateSubjectProgress(subjectItem) {
+            const subSubjects = subjectItem.querySelector('.sub-subjects');
+            if (!subSubjects) return;
+            
+            const subItems = subSubjects.querySelectorAll('.sub-item');
+            const completedSubItems = subSubjects.querySelectorAll('.sub-item.completed');
+            
+            const progressPercent = subItems.length > 0 ? (completedSubItems.length / subItems.length) * 100 : 0;
+            
+            const progressBar = subSubjects.querySelector('.progress-fill');
+            const progressText = subSubjects.querySelector('.progress-info span:last-child');
+            
+            if (progressBar) {
+                progressBar.style.width = `${progressPercent}%`;
+            }
+            
+            if (progressText) {
+                progressText.textContent = `${completedSubItems.length}/${subItems.length} topics`;
+            }
+            
+            // If all sub-topics are completed, mark the subject as completed
+            if (subItems.length > 0 && completedSubItems.length === subItems.length) {
+                subjectItem.classList.add('completed');
+                const subjectBtn = subjectItem.querySelector('.subject-actions .btn-primary');
+                if (subjectBtn) {
+                    subjectBtn.textContent = 'Completed';
+                    subjectBtn.classList.remove('btn-primary');
+                    subjectBtn.classList.add('btn-success');
+                }
+            } else if (subjectItem.classList.contains('completed')) {
+                subjectItem.classList.remove('completed');
+                const subjectBtn = subjectItem.querySelector('.subject-actions .btn-primary');
+                if (subjectBtn) {
+                    subjectBtn.textContent = 'Mark Complete';
+                    subjectBtn.classList.remove('btn-success');
+                    subjectBtn.classList.add('btn-primary');
+                }
+            }
+        }
+        
+        // Update all progress
+        function updateAllProgress() {
+            // Update chapter progress
+            const subjects = document.querySelectorAll('.subject-item');
+            const completedSubjects = document.querySelectorAll('.subject-item.completed');
+            
+            const chapterProgressPercentage = (completedSubjects.length / subjects.length) * 100;
+            document.getElementById('chapter-progress-bar').style.width = `${chapterProgressPercentage}%`;
+            document.getElementById('chapter-progress-text').textContent = `${completedSubjects.length}/${subjects.length} chapters`;
+            document.getElementById('overall-chapter-progress').textContent = `${Math.round(chapterProgressPercentage)}% complete`;
+            
+            // Update subtopic progress
+            let totalSubtopics = 0;
+            let completedSubtopics = 0;
+            
+            subjects.forEach(subject => {
+                const subItems = subject.querySelectorAll('.sub-item');
+                const completedSubItems = subject.querySelectorAll('.sub-item.completed');
+                
+                totalSubtopics += subItems.length;
+                completedSubtopics += completedSubItems.length;
+            });
+            
+            const subtopicProgressPercentage = totalSubtopics > 0 ? (completedSubtopics / totalSubtopics) * 100 : 0;
+            document.getElementById('all-subtopic-progress-bar').style.width = `${subtopicProgressPercentage}%`;
+            document.getElementById('all-subtopic-progress-text').textContent = `${completedSubtopics}/${totalSubtopics} topics`;
+            document.getElementById('subtopic-overall-progress').textContent = `${Math.round(subtopicProgressPercentage)}% complete`;
+            
+            // Update overall progress
+            const overallProgress = Math.round((chapterProgressPercentage + subtopicProgressPercentage) / 2);
+            document.getElementById('overall-progress').textContent = `${overallProgress}%`;
+        }
+        
+        // Update subtopic overview
+        function updateSubtopicOverview() {
+            subtopicOverview.innerHTML = '';
+            
+            const subjects = document.querySelectorAll('.subject-item');
+            
+            subjects.forEach(subject => {
+                const subjectName = subject.dataset.subject;
+                const subItems = subject.querySelectorAll('.sub-item');
+                const completedSubItems = subject.querySelectorAll('.sub-item.completed');
+                
+                const progressPercentage = subItems.length > 0 ? (completedSubItems.length / subItems.length) * 100 : 0;
+                
+                const subtopicCard = document.createElement('div');
+                subtopicCard.className = 'subtopic-card';
+                subtopicCard.innerHTML = `
+                    <h3>${subjectName}</h3>
+                    <div class="progress-info">
+                        <span>Progress</span>
+                        <span>${Math.round(progressPercentage)}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progressPercentage}%;"></div>
+                    </div>
+                    <div class="progress-details">
+                        <p>${completedSubItems.length} of ${subItems.length} topics completed</p>
+                    </div>
+                `;
+                
+                subtopicOverview.appendChild(subtopicCard);
+            });
+        }
+        
+        // Setup drag and drop for subjects
+        function setupDragAndDrop(item) {
+            item.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', this.getAttribute('data-subject'));
+                this.classList.add('dragging');
+            });
+            
+            item.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+                saveProgress();
+            });
+        }
+        
+        // Initialize drag and drop for existing subjects
+        document.querySelectorAll('.subject-item').forEach(item => {
+            setupDragAndDrop(item);
+            
+            // Make the subject list a drop zone
+            item.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            
+            item.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const subjectName = e.dataTransfer.getData('text/plain');
+                const draggedItem = document.querySelector(`.subject-item[data-subject="${subjectName}"]`);
+                
+                if (draggedItem && draggedItem !== this) {
+                    const allItems = Array.from(document.querySelectorAll('.subject-item'));
+                    const thisIndex = allItems.indexOf(this);
+                    const draggedIndex = allItems.indexOf(draggedItem);
+                    
+                    if (draggedIndex < thisIndex) {
+                        this.parentNode.insertBefore(draggedItem, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedItem, this);
+                    }
+                    
+                    saveProgress();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
